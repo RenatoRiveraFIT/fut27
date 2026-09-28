@@ -4,7 +4,8 @@ import { toPlayerRow } from '../futgg/mapPlayer';
 import { upsertPlayerPage } from '../db/players';
 import { markError, markOk } from '../status';
 
-export const RATING_BUCKETS: [number, number][] = [[0, 59], [60, 64], [65, 69], [70, 74], [75, 79], [80, 84], [85, 99]];
+// De mayor a menor valoración: las cartas que más importan llegan primero en cada ciclo.
+export const RATING_BUCKETS: [number, number][] = [[85, 99], [80, 84], [75, 79], [70, 74], [65, 69], [60, 64], [0, 59]];
 const SOURCE = 'futgg_players';
 const JOB = 'players';
 const API_CAP = 10_000;

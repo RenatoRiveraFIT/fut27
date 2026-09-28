@@ -60,8 +60,14 @@ describe('runPlayersBatch', () => {
   it('marca error si un tramo llega al tope de 10.000', async () => {
     const db = createTestDb();
     const r = await runPlayersBatch(db, fixtureFetcher({ [playersPath(0, 1)]: { ...page, total: 10000 } }), { now, pagesPerRun: 1 });
-    expect(r.error).toContain('tramo 0-59');
+    expect(r.error).toContain('tramo 85-99');
     const s = await db.prepare("SELECT error_msg FROM source_status WHERE source = 'futgg_players'").first<{ error_msg: string }>();
     expect(s!.error_msg).toContain('10.000');
+  });
+
+  it('empieza el ciclo por las cartas de mayor valoración', () => {
+    expect(RATING_BUCKETS[0]).toEqual([85, 99]);
+    const lows = RATING_BUCKETS.map(([lo]) => lo);
+    expect(lows).toEqual([...lows].sort((a, b) => b - a));
   });
 });
