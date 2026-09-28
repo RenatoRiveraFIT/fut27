@@ -6,8 +6,8 @@
   --text: #e8ecf4;
   --muted: #8c98b0;
   --accent: #c8263f;
-  --pc: #3fb68b;
-  --consola: #8a98ff;
+  --pc: #2fa37c;
+  --consola: #7a87f5;
   --estimado: #c9a227;
   --up: #3fb68b;
   --down: #e0566b;
@@ -93,12 +93,18 @@ button:disabled { opacity: .4; cursor: default; }
 .facts { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; color: var(--muted); margin: 0 0 .5rem; padding: 0; list-style: none; }
 
 /* Gráfico */
-.chart { margin: 0; background: var(--surface); border-radius: 8px; padding: .75rem; }
+.chart { margin: 0; background: var(--surface); border-radius: 8px; padding: .75rem; position: relative; }
+.chart__cross { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.chart__tip {
+  position: absolute; top: .5rem; transform: translateX(-50%); pointer-events: none; white-space: nowrap;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: .35rem .6rem; font-size: .85rem;
+}
+.chart__tip i { display: inline-block; width: .6rem; height: .6rem; border-radius: 50%; margin-right: .35rem; }
 .chart svg { width: 100%; height: auto; display: block; }
 .chart__grid { stroke: var(--line); stroke-width: 1; }
 .chart__tick { fill: var(--muted); font-size: 12px; font-family: var(--body); }
 .chart figcaption { display: flex; gap: 1rem; font-size: .85rem; margin-top: .25rem; color: var(--muted); }
-.chart figcaption i { display: inline-block; width: .9rem; height: 3px; vertical-align: middle; margin-right: .35rem; }
+.chart figcaption i { display: inline-block; width: .9rem; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: .35rem; }
 
 /* Mercado: pisos como marcador */
 .floors { display: flex; gap: 2px; overflow-x: auto; margin-bottom: 1rem; padding-bottom: 4px; }
