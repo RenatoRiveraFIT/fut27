@@ -1,0 +1,13 @@
+{
+  "name": "@fut27/web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json && vite build",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": { "@fut27/shared": "*", "react": "^19.3.0", "react-dom": "^19.3.0", "react-router-dom": "^7.18.4" },
+  "devDependencies": { "vite": "^8.3.1", "@vitejs/plugin-react": "^6.1.1", "@types/react": "^19.0.0", "@types/react-dom": "^19.0.0" }
+}
