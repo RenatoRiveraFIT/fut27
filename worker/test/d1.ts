@@ -3,9 +3,15 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { Fetcher } from '../src/futgg/client';
 
+const D1_MAX_PARAMS = 100;
+
 class Stmt {
   constructor(private db: DatabaseSync, private sql: string, private params: unknown[] = []) {}
-  bind(...params: unknown[]) { return new Stmt(this.db, this.sql, params); }
+  bind(...params: unknown[]) {
+    // D1 limita a 100 parámetros por consulta; el adaptador lo imita para que los tests lo detecten.
+    if (params.length > D1_MAX_PARAMS) throw new Error('D1_ERROR: too many SQL variables');
+    return new Stmt(this.db, this.sql, params);
+  }
   private p() { return this.params.map((v) => (typeof v === 'boolean' ? Number(v) : v ?? null)) as never[]; }
   async all<T>() { return { results: this.db.prepare(this.sql).all(...this.p()) as T[], success: true, meta: {} }; }
   async first<T>() { return (this.db.prepare(this.sql).get(...this.p()) as T | undefined) ?? null; }

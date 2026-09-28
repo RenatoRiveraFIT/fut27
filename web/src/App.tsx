@@ -1,4 +1,5 @@
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
+import { MarketPage } from './pages/MarketPage';
 import { PlayerPage } from './pages/PlayerPage';
 import { PlayersPage } from './pages/PlayersPage';
 import { StatusPage } from './pages/StatusPage';
@@ -19,6 +20,7 @@ export function App() {
           <Route path="/" element={<Navigate to="/jugadores" replace />} />
           <Route path="/jugadores" element={<PlayersPage />} />
           <Route path="/jugador/:id" element={<PlayerPage />} />
+          <Route path="/mercado" element={<MarketPage />} />
           <Route path="/estado" element={<StatusPage />} />
           <Route path="*" element={<p className="empty">Esta página no existe. Vuelve a Jugadores desde el menú.</p>} />
         </Routes>

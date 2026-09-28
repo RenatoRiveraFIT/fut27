@@ -45,4 +45,15 @@ describe('runMarket', () => {
     const s = await db.prepare("SELECT error_msg FROM source_status WHERE source = 'futgg_market'").first<{ error_msg: string }>();
     expect(s!.error_msg).toContain('403');
   });
+
+  it('guarda más de 100 cartas baratas sin pasar el límite de parámetros de D1', async () => {
+    const db = createTestDb();
+    const many = { data: { '84': Array.from({ length: 140 }, (_, i) => ({ price: 650 + i, eaId: 1000 + i, name: `J${i}`, overall: 84 })) } };
+    const r = await runMarket(db, fixtureFetcher({ [FLOORS_PATH]: floorsFx, [OVERVIEW_PATH]: many }), { now: t1 });
+    expect(r.error).toBeUndefined();
+    expect(r.prices).toBe(140);
+    const again = await runMarket(db, fixtureFetcher({ [FLOORS_PATH]: floorsFx, [OVERVIEW_PATH]: many }), { now: t2 });
+    expect(again.error).toBeUndefined();
+    expect((await db.prepare('SELECT COUNT(*) c FROM price_history').first<{ c: number }>())!.c).toBe(140);
+  });
 });

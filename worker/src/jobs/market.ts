@@ -30,9 +30,8 @@ async function upsertCheapest(db: D1Database, overview: Record<string, { eaId: n
   const cards = new Map<number, number>();
   for (const list of Object.values(overview)) for (const c of list) if (c.price > 0) cards.set(c.eaId, c.price);
   if (!cards.size) return 0;
-  const ids = [...cards.keys()];
-  const current = await db.prepare(`SELECT ea_id, price FROM prices WHERE platform = ? AND ea_id IN (${ids.map(() => '?').join(',')})`)
-    .bind(PLATFORM, ...ids).all<{ ea_id: number; price: number }>();
+  // Sin IN (...): D1 admite como máximo 100 parámetros y los precios de consola son pocos cientos de filas.
+  const current = await db.prepare('SELECT ea_id, price FROM prices WHERE platform = ?1').bind(PLATFORM).all<{ ea_id: number; price: number }>();
   const prev = new Map(current.results.map((r) => [r.ea_id, r.price]));
   const stmts: D1PreparedStatement[] = [];
   for (const [eaId, price] of cards) {
