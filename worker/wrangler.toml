@@ -8,7 +8,7 @@ crons = ["* * * * *", "*/15 * * * *"]
 [[d1_databases]]
 binding = "DB"
 database_name = "fut27"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "2683a11b-9426-4ff4-9be9-9b1b5cda7f9a"
 migrations_dir = "migrations"
 
 [assets]
