@@ -19,7 +19,7 @@ describe('API de mercado y estado', () => {
     const movers = (await (await handleApi(new Request('https://x.test/api/market/movers'), env, now)).json()) as MoversResponse;
     expect(movers).toMatchObject({ platform: 'consola', up: [], down: [] });
     const status = (await (await handleApi(new Request('https://x.test/api/status'), env, now)).json()) as StatusResponse;
-    expect(status.sources.map((s) => s.source)).toContain('futgg_market');
+    expect(status.sources.map((s) => s.source)).toContain('futgg_floors');
     expect(status.pricedCount).toBeGreaterThan(0);
   });
 });

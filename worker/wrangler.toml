@@ -2,6 +2,10 @@ name = "fut27"
 main = "src/index.ts"
 compatibility_date = "2026-09-01"
 
+# Sin cron: la sincronización corre en GitHub Actions (FUT.GG bloquea las peticiones que salen de Workers).
+[triggers]
+crons = []
+
 [[d1_databases]]
 binding = "DB"
 database_name = "fut27"

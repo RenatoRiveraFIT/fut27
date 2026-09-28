@@ -42,8 +42,25 @@ describe('runMarket', () => {
     expect(r.error).toBeDefined();
     const kept = await db.prepare('SELECT MAX(updated_at) m FROM floors').first<{ m: string }>();
     expect(kept!.m).toBe(t1.toISOString());
-    const s = await db.prepare("SELECT error_msg FROM source_status WHERE source = 'futgg_market'").first<{ error_msg: string }>();
+    const s = await db.prepare("SELECT error_msg FROM source_status WHERE source = 'futgg_floors'").first<{ error_msg: string }>();
     expect(s!.error_msg).toContain('403');
+  });
+
+  it('si un piso pasa a 0 se borra, no queda el valor viejo', async () => {
+    const db = createTestDb();
+    await runMarket(db, fixtureFetcher({ [FLOORS_PATH]: { data: { '93': 1884000 } }, [OVERVIEW_PATH]: overviewFx }), { now: t1 });
+    await runMarket(db, fixtureFetcher({ [FLOORS_PATH]: { data: { '93': 0 } }, [OVERVIEW_PATH]: overviewFx }), { now: t2 });
+    expect(await db.prepare('SELECT price FROM floors WHERE rating = 93').first()).toBeNull();
+  });
+
+  it('una falla parcial y persistente queda como error vigente en su propia fuente', async () => {
+    const db = createTestDb();
+    await runMarket(db, fixtureFetcher({ [FLOORS_PATH]: floorsFx, [OVERVIEW_PATH]: 403 }), { now: t1 });
+    const s = await db.prepare("SELECT source, last_ok, last_error FROM source_status ORDER BY source").all<{ source: string; last_ok: string | null; last_error: string | null }>();
+    expect(s.results).toEqual([
+      { source: 'futgg_cheapest', last_ok: null, last_error: t1.toISOString() },
+      { source: 'futgg_floors', last_ok: t1.toISOString(), last_error: null },
+    ]);
   });
 
   it('guarda más de 100 cartas baratas sin pasar el límite de parámetros de D1', async () => {

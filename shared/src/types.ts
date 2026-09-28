@@ -45,7 +45,7 @@ export interface ResolvedPrice {
 
 export type CardWithPrice = Card & { price: ResolvedPrice };
 
-export interface PlayersResponse { items: CardWithPrice[]; page: number; pageSize: number; total: number }
+export interface PlayersResponse { items: CardWithPrice[]; page: number; pageSize: number; hasMore: boolean }
 export interface PricePoint { ts: string; price: number }
 export interface PlayerDetailResponse {
   card: CardWithPrice;

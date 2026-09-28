@@ -29,7 +29,8 @@ describe('GET /api/players', () => {
   it('lista ordenado por valoración con precio resuelto y nombres de club/liga', async () => {
     const { status, body } = await get<PlayersResponse>('/api/players');
     expect(status).toBe(200);
-    expect(body.total).toBe(uniqueCards);
+    expect(body.items).toHaveLength(uniqueCards);
+    expect(body.hasMore).toBe(false);
     const ovr = body.items.map((c) => c.overall);
     expect(ovr).toEqual([...ovr].sort((a, b) => b - a));
     expect(body.items[0]!.price.label).toBeTypeOf('string');
@@ -47,7 +48,7 @@ describe('GET /api/players', () => {
   it('los comodines de LIKE se buscan literalmente', async () => {
     for (const q of ['%', '_', '%25']) {
       const { body } = await get<PlayersResponse>(`/api/players?q=${encodeURIComponent(q)}`);
-      expect(body.total).toBe(0);
+      expect(body.items).toHaveLength(0);
     }
   });
 
@@ -81,6 +82,26 @@ describe('GET /api/players/:eaId', () => {
   });
   it('404 si no existe', async () => {
     expect((await get('/api/players/1')).status).toBe(404);
+  });
+});
+
+describe('costo de lecturas en D1', () => {
+  it('ni el listado ni meta recorren toda la tabla players con COUNT o DISTINCT', async () => {
+    const seen: string[] = [];
+    const real = env.DB;
+    env = { ...env, DB: { ...real, prepare: (sql: string) => { seen.push(sql); return real.prepare(sql); } } as D1Database };
+    await get('/api/players');
+    await get('/api/meta');
+    expect(seen.filter((q) => /COUNT\(\*\)[\s\S]*FROM players/i.test(q) || /DISTINCT\s+rarity_name/i.test(q))).toEqual([]);
+  });
+
+  it('hasMore indica si hay otra página', async () => {
+    const db = env.DB;
+    const extra = Array.from({ length: 31 }, (_, i) => db.prepare(
+      "INSERT INTO players (ea_id, base_ea_id, name, search_name, overall, position, alt_positions, rarity_name, is_icon, is_hero, is_sbc, is_objective, is_evo, stats, playstyles, playstyles_plus, hash, updated_at) VALUES (?1, ?1, 'X', 'x', 50, 'ST', '[]', 'Common', 0, 0, 0, 0, 0, '[]', '[]', '[]', 'h', 'now')",
+    ).bind(900000 + i));
+    await db.batch(extra);
+    expect((await get<PlayersResponse>('/api/players')).body.hasMore).toBe(true);
   });
 });
 

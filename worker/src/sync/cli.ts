@@ -1,6 +1,6 @@
 // Punto de entrada de la sincronización en GitHub Actions: `npx tsx worker/src/sync/cli.ts`.
 import { createHttpD1 } from './d1http';
-import { runSync, withDelay } from './run';
+import { exitCode, runSync, withDelay } from './run';
 
 function required(name: string): string {
   const v = process.env[name];
@@ -18,4 +18,4 @@ const fetcher = withDelay((url, init) => fetch(url, init), 400);
 
 const result = await runSync(db, fetcher, { now: new Date(), pagesPerRun });
 console.log(JSON.stringify(result, null, 2));
-if (result.market.error && result.players.error) process.exitCode = 1;
+process.exitCode = exitCode(result);

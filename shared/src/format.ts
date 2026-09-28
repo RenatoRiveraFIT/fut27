@@ -8,6 +8,10 @@ export function formatCoins(n: number): string {
   return String(n);
 }
 
+/** Letras que NFD no descompone en base + diacrítico. */
+const TRANSLIT: Record<string, string> = { ø: 'o', æ: 'ae', œ: 'oe', ł: 'l', ı: 'i', đ: 'd', ß: 'ss', þ: 'th', ð: 'd' };
+
 export function normalizeText(s: string): string {
-  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/\s+/g, ' ');
+  return s.toLowerCase().replace(/[øæœłıđßþð]/g, (c) => TRANSLIT[c] ?? c)
+    .normalize('NFD').replace(/[̀-ͯ]/g, '').trim().replace(/\s+/g, ' ');
 }

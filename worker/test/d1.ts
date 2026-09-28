@@ -1,5 +1,5 @@
 import { DatabaseSync } from 'node:sqlite';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { Fetcher } from '../src/futgg/client';
 
@@ -21,7 +21,8 @@ class Stmt {
 
 export function createTestDb(): D1Database {
   const db = new DatabaseSync(':memory:');
-  db.exec(readFileSync(fileURLToPath(new URL('../migrations/0001_init.sql', import.meta.url).href), 'utf8'));
+  const dir = fileURLToPath(new URL('../migrations/', import.meta.url).href);
+  for (const f of readdirSync(dir).filter((x) => x.endsWith('.sql')).sort()) db.exec(readFileSync(dir + f, 'utf8'));
   const api = {
     prepare: (sql: string) => new Stmt(db, sql),
     async batch(stmts: Stmt[]) {

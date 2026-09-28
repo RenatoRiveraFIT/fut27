@@ -11,4 +11,11 @@ describe('formatCoins', () => {
 describe('normalizeText', () => {
   it('quita acentos y pasa a minúsculas', () => expect(normalizeText('Kylian Mbappé')).toBe('kylian mbappe'));
   it('colapsa espacios', () => expect(normalizeText('  Vini   Jr. ')).toBe('vini jr.'));
+  it('translitera letras que NFD no descompone', () => {
+    expect(normalizeText('Ødegaard')).toBe('odegaard');
+    expect(normalizeText('Højlund')).toBe('hojlund');
+    expect(normalizeText('Yıldız')).toBe('yildiz');
+    expect(normalizeText('Błaszczykowski')).toBe('blaszczykowski');
+    expect(normalizeText('Æ Œ Đ ß Þ')).toBe('ae oe d ss th');
+  });
 });

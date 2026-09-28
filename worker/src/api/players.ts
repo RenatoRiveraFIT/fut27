@@ -37,17 +37,18 @@ export async function listPlayers(db: D1Database, url: URL, now: Date): Promise<
   const order = SORTS[q.get('sort') ?? '-ovr'] ?? SORTS['-ovr'];
   const page = intParam(q.get('page'), 1, 10_000) ?? 1;
 
-  const [countRow, rows, floors] = await Promise.all([
-    db.prepare(`SELECT COUNT(*) AS c FROM players p ${whereSql}`).bind(...args).first<{ c: number }>(),
-    db.prepare(`${CARD_SELECT} ${whereSql} ORDER BY ${order} LIMIT ${PAGE_SIZE} OFFSET ${(page - 1) * PAGE_SIZE}`).bind(...args).all<CardDbRow>(),
-    loadFloors(db),
+  // Sin COUNT(*): en D1 cada fila leída cuenta para la cuota diaria. Se pide una fila extra para saber si hay otra página.
+  const [rows, floors] = await Promise.all([
+    db.prepare(`${CARD_SELECT} ${whereSql} ORDER BY ${order} LIMIT ${PAGE_SIZE + 1} OFFSET ${(page - 1) * PAGE_SIZE}`).bind(...args).all<CardDbRow>(),
+    loadFloors(db, 'consola', now),
   ]);
-  const body: PlayersResponse = { items: rows.results.map((r) => rowToCard(r, floors, now)), page, pageSize: PAGE_SIZE, total: countRow?.c ?? 0 };
+  const items = rows.results.slice(0, PAGE_SIZE).map((r) => rowToCard(r, floors, now));
+  const body: PlayersResponse = { items, page, pageSize: PAGE_SIZE, hasMore: rows.results.length > PAGE_SIZE };
   return json(body);
 }
 
 export async function getPlayer(db: D1Database, eaId: number, now: Date): Promise<Response> {
-  const floors = await loadFloors(db);
+  const floors = await loadFloors(db, 'consola', now);
   const row = await db.prepare(`${CARD_SELECT} WHERE p.ea_id = ?`).bind(eaId).first<CardDbRow>();
   if (!row) return json({ error: 'Carta no encontrada' }, 404);
   const card = rowToCard(row, floors, now);
@@ -69,7 +70,7 @@ export async function getMeta(db: D1Database): Promise<Response> {
     db.prepare('SELECT id, name FROM leagues ORDER BY name').all<{ id: number; name: string }>(),
     db.prepare('SELECT id, name FROM nations ORDER BY name').all<{ id: number; name: string }>(),
     db.prepare('SELECT id, name FROM clubs ORDER BY name').all<{ id: number; name: string }>(),
-    db.prepare('SELECT DISTINCT rarity_name AS r FROM players ORDER BY r').all<{ r: string }>(),
+    db.prepare('SELECT name AS r FROM rarities ORDER BY name').all<{ r: string }>(),
   ]);
   const body: MetaResponse = { leagues: leagues.results, nations: nations.results, clubs: clubs.results, rarities: rarities.results.map((x) => x.r), positions: POSITIONS };
   return json(body);

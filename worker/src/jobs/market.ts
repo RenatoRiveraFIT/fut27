@@ -4,7 +4,6 @@ import { markError, markOk } from '../status';
 
 export const FLOORS_PATH = 'market/cheapest-price-per-rating/';
 export const OVERVIEW_PATH = 'market/27/cheapest-by-rating/v2/overview/';
-const SOURCE = 'futgg_market';
 const PLATFORM = 'consola';
 
 async function upsertFloors(db: D1Database, floors: Record<string, number>, now: string): Promise<number> {
@@ -14,7 +13,12 @@ async function upsertFloors(db: D1Database, floors: Record<string, number>, now:
   let valid = 0;
   for (const [k, price] of Object.entries(floors)) {
     const rating = Number(k);
-    if (!Number.isInteger(rating) || price <= 0) continue;
+    if (!Number.isInteger(rating)) continue;
+    if (price <= 0) {
+      // FUT.GG dejó de tener piso para esa valoración: el anterior ya no vale.
+      if (prev.has(rating)) stmts.push(db.prepare('DELETE FROM floors WHERE rating = ?1 AND platform = ?2').bind(rating, PLATFORM));
+      continue;
+    }
     valid++;
     stmts.push(db.prepare('INSERT INTO floors (rating, platform, price, updated_at) VALUES (?1, ?2, ?3, ?4) ON CONFLICT(rating, platform) DO UPDATE SET price = ?3, updated_at = ?4')
       .bind(rating, PLATFORM, price, now));
@@ -45,17 +49,29 @@ async function upsertCheapest(db: D1Database, overview: Record<string, { eaId: n
   return cards.size;
 }
 
+/** Corre un paso y lo registra en su propia fuente, para que una falla parcial no quede tapada por un éxito. */
+async function step(db: D1Database, source: string, now: string, fn: () => Promise<{ count: number; detail: string }>) {
+  try {
+    const r = await fn();
+    await markOk(db, source, now, r.detail);
+    return { count: r.count, error: undefined };
+  } catch (e) {
+    const error = e instanceof Error ? e.message : String(e);
+    await markError(db, source, now, error);
+    return { count: 0, error };
+  }
+}
+
 export async function runMarket(db: D1Database, fetcher: Fetcher, opts: { now: Date }) {
   const now = opts.now.toISOString();
-  const errors: string[] = [];
-  let floors = 0;
-  let prices = 0;
-  try { floors = await upsertFloors(db, (await getJson(fetcher, FLOORS_PATH, cheapestPerRatingSchema)).data, now); }
-  catch (e) { errors.push(e instanceof Error ? e.message : String(e)); }
-  try { prices = await upsertCheapest(db, (await getJson(fetcher, OVERVIEW_PATH, cheapestOverviewSchema)).data, now); }
-  catch (e) { errors.push(e instanceof Error ? e.message : String(e)); }
-  const error = errors.length ? errors.join(' | ') : undefined;
-  if (error) await markError(db, SOURCE, now, error);
-  if (floors || prices) await markOk(db, SOURCE, now, `${floors} pisos, ${prices} precios`);
-  return { floors, prices, error };
+  const f = await step(db, 'futgg_floors', now, async () => {
+    const n = await upsertFloors(db, (await getJson(fetcher, FLOORS_PATH, cheapestPerRatingSchema)).data, now);
+    return { count: n, detail: `${n} pisos` };
+  });
+  const c = await step(db, 'futgg_cheapest', now, async () => {
+    const n = await upsertCheapest(db, (await getJson(fetcher, OVERVIEW_PATH, cheapestOverviewSchema)).data, now);
+    return { count: n, detail: `${n} precios` };
+  });
+  const errors = [f.error, c.error].filter(Boolean);
+  return { floors: f.count, prices: c.count, error: errors.length ? errors.join(' | ') : undefined };
 }

@@ -21,10 +21,14 @@ PC, Consola, Estimado (piso de su valoración), Sin precio o No transferible.
 
 ```
 shared/   tipos y lógica pura (precios, formato)
-worker/   Cloudflare Worker: cron de scraping, API /api/* y assets de la web; esquema D1 en migrations/
+worker/   Cloudflare Worker (API /api/* y assets de la web), esquema D1 en migrations/ y la sincronización (src/sync)
 web/      Vite + React
 docs/     spec y planes
 ```
+
+**Ojo:** GitHub desactiva los workflows programados de un repo público tras 60 días sin commits. Si la pantalla
+Estado muestra una fuente "Sin actualizar hace más de 1 hora", revisa Actions y reactiva el workflow
+(`gh workflow enable sync.yml`). Cada corrida fallida también llega por correo de GitHub.
 
 ## Desarrollo
 

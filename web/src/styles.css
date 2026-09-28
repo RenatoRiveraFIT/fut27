@@ -126,6 +126,7 @@ button:disabled { opacity: .4; cursor: default; }
 .table th { text-align: left; color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--line); padding: .5rem; }
 .table td { border-bottom: 1px solid var(--line); padding: .6rem .5rem; vertical-align: top; }
 .row--error td { color: var(--down); }
+.row--stale td { color: var(--estimado); }
 
 @media (max-width: 640px) {
   h1 { font-size: 1.9rem; }

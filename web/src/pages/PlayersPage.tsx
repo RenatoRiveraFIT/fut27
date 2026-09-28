@@ -17,7 +17,6 @@ export function PlayersPage() {
   const meta = useApi(() => api.meta(), []);
   const list = useApi(() => api.players(qs), [qs]);
   const page = Number(filters.page ?? '1');
-  const pages = list.data ? Math.max(1, Math.ceil(list.data.total / list.data.pageSize)) : 1;
 
   return (
     <section>
@@ -27,14 +26,13 @@ export function PlayersPage() {
       {list.loading && !list.data && <p className="empty">Cargando…</p>}
       {list.data && (
         <>
-          <p className="muted">{list.data.total.toLocaleString('es-CL')} cartas</p>
           <div className="list">{list.data.items.map((c) => <CardRow key={c.eaId} card={c} />)}</div>
           {!list.data.items.length && <p className="empty">Ninguna carta cumple esos filtros. Prueba quitando alguno.</p>}
-          {pages > 1 && (
+          {(page > 1 || list.data.hasMore) && (
             <nav className="pager" aria-label="Páginas">
               <button disabled={page <= 1} onClick={() => setFilters({ ...filters, page: String(page - 1) })}>Anterior</button>
-              <span>Página {page} de {pages}</span>
-              <button disabled={page >= pages} onClick={() => setFilters({ ...filters, page: String(page + 1) })}>Siguiente</button>
+              <span>Página {page}</span>
+              <button disabled={!list.data.hasMore} onClick={() => setFilters({ ...filters, page: String(page + 1) })}>Siguiente</button>
             </nav>
           )}
         </>

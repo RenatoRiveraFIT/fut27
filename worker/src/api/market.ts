@@ -27,7 +27,7 @@ export async function getMovers(db: D1Database, url: URL, now: Date): Promise<Re
     const ids = moves.map((m) => m.eaId);
     const [cards, floors] = await Promise.all([
       db.prepare(`${CARD_SELECT} WHERE p.ea_id IN (${ids.map(() => '?').join(',')})`).bind(...ids).all<CardDbRow>(),
-      loadFloors(db),
+      loadFloors(db, 'consola', now),
     ]);
     const byId = new Map(cards.results.map((r) => [r.ea_id as number, rowToCard(r, floors, now)]));
     const withCard = moves.flatMap((m) => { const card = byId.get(m.eaId); return card ? [{ card, from: m.from, to: m.to, changePct: m.changePct }] : []; });

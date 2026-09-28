@@ -26,3 +26,12 @@ describe('runSync', () => {
     expect((await db.prepare('SELECT COUNT(*) c FROM players').first<{ c: number }>())!.c).toBeGreaterThan(0);
   });
 });
+
+describe('exitCode', () => {
+  it('falla el job si cualquiera de las fuentes falló, para que GitHub avise', async () => {
+    const { exitCode } = await import('../src/sync/run');
+    expect(exitCode({ market: { error: undefined }, players: { error: undefined } })).toBe(0);
+    expect(exitCode({ market: { error: undefined }, players: { error: 'FUT.GG 403' } })).toBe(1);
+    expect(exitCode({ market: { error: 'x' }, players: { error: undefined } })).toBe(1);
+  });
+});

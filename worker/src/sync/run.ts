@@ -20,3 +20,8 @@ export async function runSync(db: D1Database, fetcher: Fetcher, opts: { now: Dat
   const players = await runPlayersBatch(db, fetcher, opts);
   return { market, players };
 }
+
+/** Código de salida del job: distinto de 0 si falló cualquier fuente, así GitHub marca la corrida y avisa por correo. */
+export function exitCode(r: { market: { error?: string }; players: { error?: string } }): number {
+  return r.market.error || r.players.error ? 1 : 0;
+}

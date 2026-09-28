@@ -1,4 +1,4 @@
-import { resolvePrice, type CardWithPrice, type Floors, type Platform, type PriceRow } from '@fut27/shared';
+import { CONSOLA_MAX_AGE_MS, resolvePrice, type CardWithPrice, type Floors, type Platform, type PriceRow } from '@fut27/shared';
 import type { PlayerRow } from '../futgg/mapPlayer';
 
 const COLS = ['ea_id', 'base_ea_id', 'name', 'search_name', 'overall', 'position', 'alt_positions', 'club_id', 'league_id', 'nation_id',
@@ -28,6 +28,7 @@ export async function upsertPlayerPage(db: D1Database, rows: PlayerRow[]): Promi
       `INSERT INTO ${table} (id, name) VALUES (?1, ?2) ON CONFLICT(id) DO UPDATE SET name = ?2 WHERE ${table}.name IS NOT ?2`,
     ).bind(x.id, x.name));
   }
+  for (const name of new Set(rows.map((r) => r.rarity_name))) stmts.push(db.prepare('INSERT OR IGNORE INTO rarities (name) VALUES (?1)').bind(name));
   if (stmts.length) await db.batch(stmts);
 }
 
@@ -43,8 +44,10 @@ export const CARD_SELECT = `SELECT p.*, c.name AS club_name, l.name AS league_na
 
 export type CardDbRow = Record<string, string | number | null>;
 
-export async function loadFloors(db: D1Database, platform: Platform = 'consola'): Promise<Floors> {
-  const r = await db.prepare('SELECT rating, price FROM floors WHERE platform = ?1').bind(platform).all<{ rating: number; price: number }>();
+/** Pisos vigentes: con más de 48 h se consideran viejos (misma regla que los precios de consola). */
+export async function loadFloors(db: D1Database, platform: Platform, now: Date): Promise<Floors> {
+  const since = new Date(now.getTime() - CONSOLA_MAX_AGE_MS).toISOString();
+  const r = await db.prepare('SELECT rating, price FROM floors WHERE platform = ?1 AND updated_at >= ?2').bind(platform, since).all<{ rating: number; price: number }>();
   return Object.fromEntries(r.results.map((x) => [x.rating, x.price]));
 }
 
