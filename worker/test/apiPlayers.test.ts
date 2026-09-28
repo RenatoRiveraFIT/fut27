@@ -20,7 +20,7 @@ async function get<T>(path: string) {
 
 beforeEach(async () => {
   const db = createTestDb();
-  env = { DB: db, ASSETS: { fetch: async () => new Response('') }, PAGES_PER_RUN: '1' };
+  env = { DB: db, ASSETS: { fetch: async () => new Response('') } };
   await runPlayersBatch(db, fixtureFetcher({ [playersPath(0, 1)]: { ...page, next: null } }), { now, pagesPerRun: 1 });
   await runMarket(db, fixtureFetcher({ [FLOORS_PATH]: floorsFx, [OVERVIEW_PATH]: overviewFx }), { now });
 });

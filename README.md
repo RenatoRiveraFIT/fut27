@@ -8,6 +8,9 @@ Publicada en https://fut27.la-fecha-futbolera.workers.dev
 
 - Sincroniza las ~19.900 cartas de FC 27 desde FUT.GG, por tramos de valoración, en un ciclo diario.
 - Cada 15 minutos guarda el precio más barato por valoración y las cartas más baratas de cada valoración.
+- La sincronización corre en **GitHub Actions** (`.github/workflows/sync.yml`) y escribe en D1 por la API de Cloudflare:
+  FUT.GG responde 403 a las peticiones que salen de Cloudflare Workers. Secretos del repo: `CLOUDFLARE_API_TOKEN`
+  (permiso D1 Edit), `CLOUDFLARE_ACCOUNT_ID`, `D1_DATABASE_ID`.
 - Pantallas: Jugadores (buscador con filtros), Ficha (stats, versiones, historial), Mercado (pisos, subidas y bajadas) y Estado.
 
 Los precios libres de FUT.GG son de **consola** y se muestran como referencia. Los de PC llegan en la fase 3,
@@ -30,11 +33,12 @@ npm install
 npm test                 # shared + worker + web
 npm run typecheck
 
-# local: API + cron (dispara los cron con curl a /__scheduled)
+# local: API + web compilada
 npm run build
-cd worker && npx wrangler d1 migrations apply fut27 --local && npx wrangler dev --test-scheduled
-curl "http://127.0.0.1:8787/__scheduled?cron=*/15+*+*+*+*"   # mercado
-curl "http://127.0.0.1:8787/__scheduled?cron=*+*+*+*+*"      # lote de cartas
+cd worker && npx wrangler d1 migrations apply fut27 --local && npx wrangler dev
+
+# una sincronización manual contra la base remota (mismas variables que en Actions)
+CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=... D1_DATABASE_ID=... PAGES_PER_RUN=10 npx tsx worker/src/sync/cli.ts
 
 # web con recarga en caliente (usa el worker local como API)
 npm run dev -w web
@@ -46,5 +50,3 @@ npm run dev -w web
 npm run deploy                                   # compila la web y despliega el Worker
 cd worker && npx wrangler d1 migrations apply fut27 --remote   # solo si hay migraciones nuevas
 ```
-
-Si `npx wrangler tail` muestra "Exceeded CPU", baja `PAGES_PER_RUN` en `worker/wrangler.toml` a `2`.

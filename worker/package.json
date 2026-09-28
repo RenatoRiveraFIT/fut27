@@ -8,6 +8,14 @@
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json"
   },
-  "dependencies": { "@fut27/shared": "*", "zod": "^4.6.5" },
-  "devDependencies": { "wrangler": "^4.142.0", "@cloudflare/workers-types": "^5.20260927.1", "@types/node": "^24.0.0" }
+  "dependencies": {
+    "@fut27/shared": "*",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260927.1",
+    "@types/node": "^24.0.0",
+    "tsx": "^4.23.15",
+    "wrangler": "^4.142.0"
+  }
 }

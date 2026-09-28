@@ -11,7 +11,7 @@ const now = new Date('2026-09-27T12:00:00Z');
 describe('API de mercado y estado', () => {
   it('floors, movers y status responden con la forma esperada', async () => {
     const db = createTestDb();
-    const env = { DB: db, ASSETS: { fetch: async () => new Response('') }, PAGES_PER_RUN: '1' };
+    const env = { DB: db, ASSETS: { fetch: async () => new Response('') } };
     await runMarket(db, fixtureFetcher({ [FLOORS_PATH]: floorsFx, [OVERVIEW_PATH]: overviewFx }), { now });
     const floors = (await (await handleApi(new Request('https://x.test/api/market/floors'), env, now)).json()) as FloorsResponse;
     expect(floors.platform).toBe('consola');
